@@ -8,7 +8,7 @@ pixels = 3694
 com = None
 
 try:
-    com = serial.Serial("COM4", baudrate=115200, parity=serial.PARITY_NONE)
+    com = serial.Serial("COM3", baudrate=115200, parity=serial.PARITY_NONE)
 except serial.SerialException as e:
     print(e)
     exit(-1)
@@ -24,24 +24,22 @@ except serial.SerialException as e:
     exit(-1)
 
 
-frame = np.zeros((900, pixels), dtype=np.uint8)
-
-bl = 80
-gamma = 2
-v = 255 / (255 - bl)
-print(v)
+frame = np.zeros((900, pixels), dtype=np.uint16)
 
 com.flush()
 
 print("start receiving")
 
 while True:
-    recv = com.read_until(b'\xff\xff')
-    if len(recv) != pixels + 2:
+    recv = com.read_until(b'\xff\xff\xff\xff')
+    if len(recv) != pixels * 2 + 4:
+        print("invalid data")
         continue
 
-    line = np.frombuffer(recv[:-2], dtype=np.uint8)
-    line = 255 - line
+    line = np.frombuffer(recv[:-4], dtype=np.uint16)
+
+    line = 4094 - line
+    line = line * (65535 / 4094)
 
     # line[line < bl] = 0
     # line = (line - bl) * v
