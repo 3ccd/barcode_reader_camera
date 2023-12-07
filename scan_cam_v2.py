@@ -24,7 +24,7 @@ except serial.SerialException as e:
     exit(-1)
 
 
-frame = np.zeros((900, pixels), dtype=np.uint8)
+frame = np.zeros((pixels, 6000), dtype=np.uint8)
 
 com.flush()
 
@@ -43,10 +43,10 @@ while True:
     # line = (line - bl) * v
     # line = 255 * np.power(line / 255, 1 / gamma)
 
-    frame = np.roll(frame, (0, 1), axis=(1, 0))
-    frame[0, :] = line
+    frame = np.roll(frame, (0, 1), axis=(0, 1))
+    frame[:, 0] = line
 
-    prev_img = cv2.resize(frame, None, fx=0.5, fy=1)
+    prev_img = cv2.resize(frame, None, fx=0.2, fy=0.2)
 
     cv2.imshow("preview", prev_img)
 
