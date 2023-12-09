@@ -1,3 +1,5 @@
+import time
+
 import serial
 
 import numpy as np
@@ -7,7 +9,7 @@ pixels = 3694
 
 com = None
 
-offset = 70
+offset = 30
 # ガンマ変換用の数値準備
 gamma = 3  # γ値を指定
 img2gamma = np.zeros((256, 1), dtype=np.uint8)  # ガンマ変換初期値
@@ -60,12 +62,16 @@ while True:
     prev_img = cv2.LUT(frame, img2gamma)
     prev_img = cv2.resize(prev_img, None, fx=0.2, fy=0.2)
 
+    zoom_img = frame[int(pixels / 2) - 100:int(pixels / 2) + 100, :200]
+    zoom_img = cv2.resize(zoom_img, (500, 500))
+
     cv2.imshow("preview", prev_img)
+    cv2.imshow("zoom", zoom_img)
 
     ret = cv2.waitKey(1)
     if ret == ord("q"):
         break
 
 frame = cv2.LUT(frame, img2gamma)
-cv2.imwrite("out.jpg", frame)
+cv2.imwrite("out_{}.jpg".format(time.time()), frame)
 com.close()
