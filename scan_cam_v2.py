@@ -6,6 +6,7 @@ import numpy as np
 import cv2
 
 pixels = 3694
+exp = 20
 
 com = None
 
@@ -19,7 +20,7 @@ for i in range(256):
     img2gamma[i][0] = 255 * (float(i) / 255) ** (1.0 / gamma)
 
 try:
-    com = serial.Serial("COM9", baudrate=115200, parity=serial.PARITY_NONE)
+    com = serial.Serial("COM9", baudrate=115200, parity=serial.PARITY_NONE, timeout=1)
 except serial.SerialException as e:
     print(e)
     exit(-1)
@@ -39,9 +40,13 @@ com.flush()
 
 print("start receiving")
 
+com.write(b'\x03\x00')
+
 while True:
     recv = com.read_until(b'\xff\xff\xff\xff')
     if len(recv) != pixels + 4:
+        if len(recv) == 0:
+            break
         print("invalid data length : {}".format(len(recv)))
         continue
 
@@ -59,19 +64,30 @@ while True:
     frame = np.roll(frame, (0, 1), axis=(0, 1))
     frame[:, 0] = line
 
-    prev_img = cv2.LUT(frame, img2gamma)
-    prev_img = cv2.resize(prev_img, None, fx=0.2, fy=0.2)
+    # prev_img = cv2.LUT(frame, img2gamma)
+    prev_img = cv2.resize(frame, None, fx=0.2, fy=0.2)
 
     zoom_img = frame[int(pixels / 2) - 100:int(pixels / 2) + 100, :200]
     zoom_img = cv2.resize(zoom_img, (500, 500))
 
-    cv2.imshow("preview", prev_img)
+    color = cv2.cvtColor(prev_img, cv2.COLOR_GRAY2BGR)
+    cv2.putText(color, "Exposure : " + str(exp) + "ms", (0, 50), cv2.FONT_HERSHEY_PLAIN, 3, (0, 255, 0), 3, cv2.LINE_AA)
+
+    cv2.imshow("preview", color)
     cv2.imshow("zoom", zoom_img)
 
     ret = cv2.waitKey(1)
     if ret == ord("q"):
+        com.write(b'\x02\x00')
         break
+    if ret == ord("w"):
+        exp += 1
+        com.write(b'\x01' + exp.to_bytes(1, 'big'))
 
-frame = cv2.LUT(frame, img2gamma)
+    if ret == ord("e"):
+        exp -= 1
+        com.write(b'\x01' + exp.to_bytes(1, 'big'))
+
+# frame = cv2.LUT(frame, img2gamma)
 cv2.imwrite("out_{}.jpg".format(time.time()), frame)
 com.close()
