@@ -89,7 +89,7 @@ while True:
     cv2.imshow("preview", color)
     cv2.imshow("zoom", zoom_img)
 
-    ret = cv2.waitKey(1)
+    ret = cv2.waitKey()
     if ret == ord("q"):
         com.write(b'\x02\x00')
         break
@@ -100,6 +100,12 @@ while True:
     if ret == ord("e"):
         exp -= 1
         com.write(b'\x01' + exp.to_bytes(1, 'big'))
+
+    if ret == ord("s"):
+        com.write(b'\x03\x00')
+
+    if ret == ord("i"):
+        cv2.imwrite("out_{}.jpg".format(time.time()), frame)
 
 # frame = cv2.LUT(frame, img2gamma)
 cv2.imwrite("out_{}.jpg".format(time.time()), frame)
