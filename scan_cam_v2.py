@@ -48,11 +48,13 @@ com.write(b'\x03\x00')
 
 while True:
     recv = com.read_until(b'\xff\xff\xff\xff')
-    if len(recv) != pixels + 4:
-        print("invalid data length : {}".format(len(recv)))
-        continue
 
     if len(recv) != 0:
+
+        if len(recv) != pixels + 4:
+            print("invalid data length : {}".format(len(recv)))
+            continue
+
         preparing = False
 
         line = np.frombuffer(recv[:-4], dtype=np.uint8)
